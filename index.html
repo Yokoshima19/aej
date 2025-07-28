@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Filtrador AEJ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"/>
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css"/>
+</head>
+<body class="bg-gray-100 text-gray-900 font-sans p-6">
+  <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow-md">
+    <div class="flex items-center mb-6">
+      <img src="logo.png" alt="Logo" class="h-16 mr-4">
+      <h1 class="text-3xl font-bold">Filtrador de Arquivo AEJ</h1>
+    </div>
+
+    <div class="tabs mb-4">
+      <button class="tab bg-blue-600 text-white px-4 py-2 rounded mr-2" id="tabInicialBtn" aria-selected="true" aria-controls="tabInicial">Processamento Inicial</button>
+      <button class="tab bg-white text-blue-600 border px-4 py-2 rounded" id="tabAdvancedFilter" aria-selected="false" aria-controls="tabFiltered">Filtragem Avançada</button>
+    </div>
+
+    <div id="tabInicial" class="tab-content" role="tabpanel">
+      <h2 class="text-xl font-semibold mb-4">Processar Arquivo AEJ</h2>
+      <input type="file" id="fileInput" accept=".txt" class="block mb-4 border p-2"/>
+      <button id="processButton" class="bg-green-600 text-white px-4 py-2 rounded">Processar Arquivo</button>
+      <textarea id="outputContentInitial" rows="15" class="block w-full mt-4 p-2 border rounded" placeholder="Conteúdo processado será exibido aqui..."></textarea>
+      <button id="downloadTxtButton" class="bg-blue-500 text-white px-4 py-2 mt-4 rounded">Baixar TXT Processado</button>
+    </div>
+
+    <div id="tabFiltered" class="tab-content mt-6" role="tabpanel" hidden>
+      <h2 class="text-xl font-semibold mb-4">Filtragem Avançada AEJ</h2>
+      <div class="overflow-x-auto bg-white p-4 rounded shadow">
+        <table id="filteredTable" class="display nowrap w-full">
+          <thead><tr id="tableHeaderRow"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <button id="downloadButton" class="bg-purple-600 text-white px-4 py-2 mt-4 rounded">Baixar Arquivo Filtrado</button>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="Script.js"></script>
+</body>
+</html>
