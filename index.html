@@ -1,50 +1,213 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Filtrador AEJ</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"/>
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processador AEJ</title>
+    <!-- Tailwind CSS para estilização -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilização para o corpo da página e a fonte */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Efeito de transição para os botões */
+        .btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-900 font-sans p-6">
-  <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow-md">
-    <div class="flex items-center mb-6">
-      <img src="logo.png" alt="Logo" class="h-16 mr-4">
-      <h1 class="text-3xl font-bold">Filtrador de Arquivo AEJ</h1>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 m-4 mt-16">
+        
+        <!-- Cabeçalho -->
+        <div class="relative text-center mb-8">
+            <!-- Logo ajustada: menor e mais para cima -->
+            <div class="absolute -top-6 left-0">
+                <img src="https://talentosconsultoria.com.br/wp-content/uploads/2019/11/talentos-consultoria-logo.png" alt="Logo da Talentos Consultoria" class="w-40 h-auto object-contain">
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800">Processador AEJ</h1>
+            <p class="text-gray-500 mt-2">Faça o upload, processe e valide seu arquivo .txt de forma rápida e fácil.</p>
+        </div>
+
+        <!-- Área de Upload -->
+        <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-6">
+            <input type="file" id="fileInput" accept=".txt" class="hidden">
+            <label for="fileInput" class="cursor-pointer">
+                <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    <p class="mt-2 text-sm text-gray-600">
+                        <span class="font-semibold text-indigo-600">Clique para escolher</span> ou arraste o arquivo aqui.
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">Apenas arquivos .TXT</p>
+                </div>
+            </label>
+            <div id="fileName" class="mt-4 text-sm font-medium text-gray-700"></div>
+        </div>
+
+        <!-- Mensagem de Erro -->
+        <div id="errorBox" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" role="alert">
+            <strong class="font-bold">Erro: </strong>
+            <span class="block sm:inline" id="errorMessage"></span>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <button id="processButton" class="btn w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Processar Arquivo
+            </button>
+            <button onclick="window.open('https://afdfacil.net', '_blank')" class="btn w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Validar
+            </button>
+        </div>
+
+        <!-- Link de Download -->
+        <div class="text-center">
+            <a id="downloadLink" class="hidden inline-block bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg hover:bg-gray-300"></a>
+        </div>
     </div>
 
-    <div class="tabs mb-4">
-      <button class="tab bg-blue-600 text-white px-4 py-2 rounded mr-2" id="tabInicialBtn" aria-selected="true" aria-controls="tabInicial">Processamento Inicial</button>
-      <button class="tab bg-white text-blue-600 border px-4 py-2 rounded" id="tabAdvancedFilter" aria-selected="false" aria-controls="tabFiltered">Filtragem Avançada</button>
-    </div>
+    <script>
+        // Selecionando os elementos do DOM
+        const fileInput = document.getElementById('fileInput');
+        const processButton = document.getElementById('processButton');
+        const fileNameDisplay = document.getElementById('fileName');
+        const downloadLink = document.getElementById('downloadLink');
+        const errorBox = document.getElementById('errorBox');
+        const errorMessage = document.getElementById('errorMessage');
 
-    <div id="tabInicial" class="tab-content" role="tabpanel">
-      <h2 class="text-xl font-semibold mb-4">Processar Arquivo AEJ</h2>
-      <input type="file" id="fileInput" accept=".txt" class="block mb-4 border p-2"/>
-      <button id="processButton" class="bg-green-600 text-white px-4 py-2 rounded">Processar Arquivo</button>
-      <textarea id="outputContentInitial" rows="15" class="block w-full mt-4 p-2 border rounded" placeholder="Conteúdo processado será exibido aqui..."></textarea>
-      <button id="downloadTxtButton" class="bg-blue-500 text-white px-4 py-2 mt-4 rounded">Baixar TXT Processado</button>
-    </div>
+        // Adiciona um listener para mostrar o nome do arquivo selecionado
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = `Arquivo selecionado: ${fileInput.files[0].name}`;
+                errorBox.classList.add('hidden'); // Esconde a caixa de erro ao selecionar novo arquivo
+                downloadLink.classList.add('hidden'); // Esconde o link de download anterior
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        });
 
-    <div id="tabFiltered" class="tab-content mt-6" role="tabpanel" hidden>
-      <h2 class="text-xl font-semibold mb-4">Filtragem Avançada AEJ</h2>
-      <div class="overflow-x-auto bg-white p-4 rounded shadow">
-        <table id="filteredTable" class="display nowrap w-full">
-          <thead><tr id="tableHeaderRow"></tr></thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-      <button id="downloadButton" class="bg-purple-600 text-white px-4 py-2 mt-4 rounded">Baixar Arquivo Filtrado</button>
-    </div>
-  </div>
+        // Adiciona um listener para o botão de processar
+        processButton.addEventListener('click', processarArquivo);
 
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="Script.js"></script>
+        function showMessage(message) {
+            errorMessage.textContent = message;
+            errorBox.classList.remove('hidden');
+        }
+
+        function processarArquivo() {
+            // Verifica se um arquivo foi selecionado
+            if (!fileInput.files[0]) {
+                showMessage("Por favor, selecione o arquivo aej.txt antes de processar.");
+                return;
+            }
+
+            // Desabilita o botão e mostra um estado de "carregando"
+            processButton.disabled = true;
+            processButton.textContent = 'Processando...';
+            errorBox.classList.add('hidden');
+            downloadLink.classList.add('hidden');
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                try {
+                    const linhas = e.target.result.split(/\r?\n/);
+                    const cpfParaPrimeiroId = {};
+                    const idSubstituicoes = {};
+
+                    // Etapa 1: Mapear CPF para o primeiro ID encontrado
+                    for (const linha of linhas) {
+                        if (linha.startsWith("03|")) {
+                            const partes = linha.split("|");
+                            if (partes.length > 2) {
+                                const id = partes[1];
+                                const cpf = partes[2];
+                                if (cpf && !(cpf in cpfParaPrimeiroId)) {
+                                    cpfParaPrimeiroId[cpf] = id;
+                                }
+                                if (cpf) {
+                                    idSubstituicoes[id] = cpfParaPrimeiroId[cpf];
+                                }
+                            }
+                        }
+                    }
+
+                    // Etapa 2: Substituir IDs nas linhas dos tipos 03 e 05
+                    const linhasSubstituidas = linhas.map(linha => {
+                        const tipo = linha.substring(0, 2);
+                        if (tipo === "03" || tipo === "05") {
+                            const partes = linha.split("|");
+                            if (partes.length > 1) {
+                                const id = partes[1];
+                                const novoId = idSubstituicoes[id];
+                                if (novoId) {
+                                    partes[1] = novoId;
+                                    return partes.join("|");
+                                }
+                            }
+                        }
+                        return linha;
+                    });
+
+                    // Etapa 3: Remover linhas 03 duplicadas, mantendo apenas a primeira ocorrência por CPF
+                    const cpfIdsMantidos = new Set();
+                    const linhasFinais = [];
+                    for (const linha of linhasSubstituidas) {
+                        if (linha.startsWith("03|")) {
+                            const partes = linha.split("|");
+                            if (partes.length > 2) {
+                                const id = partes[1];
+                                const cpf = partes[2];
+                                const chave = `${cpf}|${id}`;
+                                // Mantém apenas a linha cujo ID é o primeiro associado àquele CPF
+                                if (cpfParaPrimeiroId[cpf] === id && !cpfIdsMantidos.has(chave)) {
+                                    cpfIdsMantidos.add(chave);
+                                    linhasFinais.push(linha);
+                                }
+                            }
+                        } else {
+                            // Mantém todas as outras linhas
+                            linhasFinais.push(linha);
+                        }
+                    }
+
+                    // Etapa 4: Criar e oferecer o arquivo final para download
+                    const blob = new Blob([linhasFinais.join("\n")], { type: "text/plain;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    
+                    downloadLink.href = url;
+                    downloadLink.download = "aej_final.txt";
+                    downloadLink.textContent = "📥 Baixar Arquivo Processado";
+                    downloadLink.classList.remove('hidden');
+
+                } catch (err) {
+                    showMessage(`Ocorreu um erro ao processar o arquivo: ${err.message}`);
+                } finally {
+                    // Reabilita o botão após o processamento
+                    processButton.disabled = false;
+                    processButton.textContent = 'Processar Arquivo';
+                }
+            };
+
+            reader.onerror = function() {
+                showMessage("Não foi possível ler o arquivo selecionado.");
+                processButton.disabled = false;
+                processButton.textContent = 'Processar Arquivo';
+            };
+
+            reader.readAsText(fileInput.files[0], "UTF-8");
+        }
+    </script>
+
 </body>
 </html>
