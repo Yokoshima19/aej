@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Processador AEJ - Com Filtro de Data
+  </title>
+  <!-- Tailwind CSS para estilização -->
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <!-- Link para o arquivo de estilo customizado -->
+  <link href="style.css" rel="stylesheet"/>
+ </head>
+ <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 m-4 mt-16">
+   <!-- Cabeçalho -->
+   <div class="relative text-center mb-8">
+    <!-- Logo ajustada: menor e mais para cima -->
+    <div class="absolute -top-6 left-0">
+     <img alt="Logo da Talentos Consultoria" class="w-40 h-auto object-contain" src="https://talentosconsultoria.com.br/wp-content/uploads/2019/11/talentos-consultoria-logo.png"/>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800">
+     Processador AEJ
+    </h1>
+    <p class="text-gray-500 mt-2">
+     Faça o upload, processe e valide seu arquivo .txt de forma rápida e fácil.
+    </p>
+   </div>
+   <!-- Filtro de Data -->
+   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div>
+     <label class="block text-sm font-medium text-gray-700" for="dataInicio">
+      Data de Início
+     </label>
+     <input class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" id="dataInicio" type="date"/>
+    </div>
+    <div>
+     <label class="block text-sm font-medium text-gray-700" for="dataFim">
+      Data de Fim
+     </label>
+     <input class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" id="dataFim" type="date"/>
+    </div>
+   </div>
+   <!-- Área de Upload -->
+   <div class="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-6 relative">
+    <!-- O input está invisível e posicionado sobre a área para ser clicável -->
+    <input accept=".txt" class="absolute inset-0 opacity-0 cursor-pointer" id="fileInput" type="file"/>
+    <label class="cursor-pointer" for="fileInput">
+     <div class="flex flex-col items-center">
+      <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+       <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+       </path>
+      </svg>
+      <p class="mt-2 text-sm text-gray-600">
+       <span class="font-semibold text-indigo-600">
+        Clique para escolher
+       </span>
+       ou arraste o arquivo aqui.
+      </p>
+      <p class="text-xs text-gray-500 mt-1">
+       Apenas arquivos .TXT
+      </p>
+     </div>
+    </label>
+    <div class="mt-4 text-sm font-medium text-gray-700" id="fileName">
+    </div>
+   </div>
+   <!-- Mensagem de Erro -->
+   <div class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-6" id="errorBox" role="alert">
+    <strong class="font-bold">
+     Erro:
+    </strong>
+    <span class="block sm:inline" id="errorMessage">
+    </span>
+   </div>
+   <!-- Botões de Ação -->
+   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <button class="btn w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed" id="processButton">
+     Processar Arquivo
+    </button>
+    <button class="btn w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" onclick="window.open('https://afdfacil.net', '_blank')">
+     Validar
+    </button>
+   </div>
+   <!-- Link de Download -->
+   <div class="text-center">
+    <a class="hidden inline-block bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg hover:bg-gray-300" id="downloadLink">
+    </a>
+   </div>
+  </div>
+  <!-- Link para o arquivo de script customizado -->
+  <script src="script.js">
+  </script>
+ </body>
+</html>
