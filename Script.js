@@ -1,14 +1,16 @@
-
-// Elementos do DOM
+// Selecionando os elementos do DOM
 const fileInput = document.getElementById('fileInput');
 const processButton = document.getElementById('processButton');
 const fileNameDisplay = document.getElementById('fileName');
 const downloadLink = document.getElementById('downloadLink');
 const errorBox = document.getElementById('errorBox');
 const errorMessage = document.getElementById('errorMessage');
+
+// Novos elementos para o filtro de data
 const dataInicioInput = document.getElementById('dataInicio');
 const dataFimInput = document.getElementById('dataFim');
 
+// Função para formatar uma data para o padrão 'YYYY-MM-DD'
 function formatDate(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -16,6 +18,7 @@ function formatDate(date) {
     return `${year}-${month}-${day}`;
 }
 
+// Função para definir as datas de início e fim do mês atual
 function setDefaultDates() {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -24,6 +27,7 @@ function setDefaultDates() {
     dataFimInput.value = formatDate(lastDay);
 }
 
+// Adiciona um listener para mostrar o nome do arquivo selecionado
 fileInput.addEventListener('change', () => {
     if (fileInput.files.length > 0) {
         fileNameDisplay.textContent = `Arquivo selecionado: ${fileInput.files[0].name}`;
@@ -34,6 +38,7 @@ fileInput.addEventListener('change', () => {
     }
 });
 
+// Adiciona um listener para o botão de processar
 processButton.addEventListener('click', processarArquivo);
 
 function showMessage(message) {
@@ -60,10 +65,37 @@ function processarArquivo() {
             const dataFim = new Date(dataFimInput.value);
 
             const linhas = e.target.result.split(/\r?\n/);
-            const cpfParaPrimeiroId = {};
-            const idSubstituicoes = {};
+            const linhasFiltradas = [];
+            const linhasMantidas = [];
 
+            // Separa as linhas que serão filtradas das que devem ser mantidas (cabeçalhos, rodapés, etc.)
             for (const linha of linhas) {
+                const tipo = linha.substring(0, 2);
+                if (['03', '05', '07'].includes(tipo)) {
+                    linhasFiltradas.push(linha);
+                } else {
+                    linhasMantidas.push(linha);
+                }
+            }
+
+            const linhasFiltradasPorData = linhasFiltradas.filter(linha => {
+                const partes = linha.split('|');
+                // Lógica de filtragem
+                if (partes.length > 3) {
+                    const dataString = partes[3];
+                    const dataPartes = dataString.split('/');
+                    if (dataPartes.length === 3) {
+                        const dataLinha = new Date(dataPartes[2], dataPartes[1] - 1, dataPartes[0]);
+                        // Ajusta a data para remover o fuso horário
+                        dataLinha.setHours(0, 0, 0, 0);
+                        return dataLinha >= dataInicio && dataLinha <= dataFim;
+                    }
+                }
+                return false;
+            });
+            
+            const cpfParaPrimeiroId = {};
+            for (const linha of linhasFiltradasPorData) {
                 if (linha.startsWith("03|")) {
                     const partes = linha.split("|");
                     const id = partes[1];
@@ -71,44 +103,19 @@ function processarArquivo() {
                     if (cpf && !(cpf in cpfParaPrimeiroId)) {
                         cpfParaPrimeiroId[cpf] = id;
                     }
-                    if (cpf) {
-                        idSubstituicoes[id] = cpfParaPrimeiroId[cpf];
-                    }
                 }
             }
 
-            const linhasFiltradas = [];
-            for (const linha of linhas) {
-                const partes = linha.split("|");
-                const tipo = partes[0];
-
-                if (["05"].includes(tipo)) {
-                    const dataISO = partes[2];
-                    try {
-                        const dataLinha = new Date(dataISO).toISOString().slice(0, 10);
-                        const dataJS = new Date(dataLinha);
-                        if (dataJS >= dataInicio && dataJS <= dataFim) {
-                            linhasFiltradas.push(linha);
-                        }
-                    } catch {}
-                } else if (["07"].includes(tipo)) {
-                    const dataISO = partes[3];
-                    try {
-                        const dataLinha = new Date(dataISO).toISOString().slice(0, 10);
-                        const dataJS = new Date(dataLinha);
-                        if (dataJS >= dataInicio && dataJS <= dataFim) {
-                            linhasFiltradas.push(linha);
-                        }
-                    } catch {}
-                } else if (["01", "02", "03", "04"].includes(tipo)) {
-                    linhasFiltradas.push(linha);
-                }
+            const idSubstituicoes = {};
+            for (const cpf in cpfParaPrimeiroId) {
+                const id = cpfParaPrimeiroId[cpf];
+                idSubstituicoes[id] = id;
             }
 
-            const linhasSubstituidas = linhasFiltradas.map(linha => {
-                const partes = linha.split("|");
-                const tipo = partes[0];
+            const linhasSubstituidas = linhasFiltradasPorData.map(linha => {
+                const tipo = linha.substring(0, 2);
                 if (["03", "05", "07"].includes(tipo)) {
+                    const partes = linha.split("|");
                     const id = partes[1];
                     const novoId = idSubstituicoes[id];
                     if (novoId) {
@@ -120,12 +127,7 @@ function processarArquivo() {
             });
 
             const cpfIdsMantidos = new Set();
-            
-            const linha08 = linhas.find(l => l.startsWith("08|"));
-            const linha99 = linhas.find(l => l.startsWith("99|"));
-            const assinatura = linhas.find(l => l.startsWith("ASSINATURA_DIGITAL_"));
-
-            const linhasFinais = [];
+            const linhasFinais = [...linhasMantidas];
     
             for (const linha of linhasSubstituidas) {
                 const partes = linha.split("|");
@@ -143,18 +145,8 @@ function processarArquivo() {
                 }
             }
 
+            const conteudoFinal = linhasFinais.join("\n");
             
-            if (linha08) {
-                linhasFinais.push(linha08);
-            }
-            if (linha99) {
-                linhasFinais.push(linha99);
-            }
-            if (assinatura) {
-                linhasFinais.push(assinatura);
-            }
-            const conteudoFinal = linhasFinais.join("\r\n");
-    
             const blob = new Blob([conteudoFinal], { type: "text/plain;charset=utf-8" });
             const url = URL.createObjectURL(blob);
 
