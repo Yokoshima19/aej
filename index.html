@@ -3,27 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Processador AEJ</title>
+    <title>Processador AEJ - Com Filtro de Data</title>
     <!-- Tailwind CSS para estilização -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Estilização para o corpo da página e a fonte */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Efeito de transição para os botões */
-        .btn {
-            transition: all 0.2s ease-in-out;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+    <!-- Link para o arquivo de estilo customizado -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
@@ -37,6 +25,18 @@
             </div>
             <h1 class="text-2xl font-bold text-gray-800">Processador AEJ</h1>
             <p class="text-gray-500 mt-2">Faça o upload, processe e valide seu arquivo .txt de forma rápida e fácil.</p>
+        </div>
+
+        <!-- Filtro de Data -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label for="dataInicio" class="block text-sm font-medium text-gray-700">Data de Início</label>
+                <input type="date" id="dataInicio" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+            <div>
+                <label for="dataFim" class="block text-sm font-medium text-gray-700">Data de Fim</label>
+                <input type="date" id="dataFim" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
         </div>
 
         <!-- Área de Upload -->
@@ -76,138 +76,7 @@
         </div>
     </div>
 
-    <script>
-        // Selecionando os elementos do DOM
-        const fileInput = document.getElementById('fileInput');
-        const processButton = document.getElementById('processButton');
-        const fileNameDisplay = document.getElementById('fileName');
-        const downloadLink = document.getElementById('downloadLink');
-        const errorBox = document.getElementById('errorBox');
-        const errorMessage = document.getElementById('errorMessage');
-
-        // Adiciona um listener para mostrar o nome do arquivo selecionado
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                fileNameDisplay.textContent = `Arquivo selecionado: ${fileInput.files[0].name}`;
-                errorBox.classList.add('hidden'); // Esconde a caixa de erro ao selecionar novo arquivo
-                downloadLink.classList.add('hidden'); // Esconde o link de download anterior
-            } else {
-                fileNameDisplay.textContent = '';
-            }
-        });
-
-        // Adiciona um listener para o botão de processar
-        processButton.addEventListener('click', processarArquivo);
-
-        function showMessage(message) {
-            errorMessage.textContent = message;
-            errorBox.classList.remove('hidden');
-        }
-
-        function processarArquivo() {
-            // Verifica se um arquivo foi selecionado
-            if (!fileInput.files[0]) {
-                showMessage("Por favor, selecione o arquivo aej.txt antes de processar.");
-                return;
-            }
-
-            // Desabilita o botão e mostra um estado de "carregando"
-            processButton.disabled = true;
-            processButton.textContent = 'Processando...';
-            errorBox.classList.add('hidden');
-            downloadLink.classList.add('hidden');
-
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-                try {
-                    const linhas = e.target.result.split(/\r?\n/);
-                    const cpfParaPrimeiroId = {};
-                    const idSubstituicoes = {};
-
-                    // Etapa 1: Mapear CPF para o primeiro ID encontrado
-                    for (const linha of linhas) {
-                        if (linha.startsWith("03|")) {
-                            const partes = linha.split("|");
-                            if (partes.length > 2) {
-                                const id = partes[1];
-                                const cpf = partes[2];
-                                if (cpf && !(cpf in cpfParaPrimeiroId)) {
-                                    cpfParaPrimeiroId[cpf] = id;
-                                }
-                                if (cpf) {
-                                    idSubstituicoes[id] = cpfParaPrimeiroId[cpf];
-                                }
-                            }
-                        }
-                    }
-
-                    // Etapa 2: Substituir IDs nas linhas dos tipos 03 e 05
-                    const linhasSubstituidas = linhas.map(linha => {
-                        const tipo = linha.substring(0, 2);
-                        if (tipo === "03" || tipo === "05") {
-                            const partes = linha.split("|");
-                            if (partes.length > 1) {
-                                const id = partes[1];
-                                const novoId = idSubstituicoes[id];
-                                if (novoId) {
-                                    partes[1] = novoId;
-                                    return partes.join("|");
-                                }
-                            }
-                        }
-                        return linha;
-                    });
-
-                    // Etapa 3: Remover linhas 03 duplicadas, mantendo apenas a primeira ocorrência por CPF
-                    const cpfIdsMantidos = new Set();
-                    const linhasFinais = [];
-                    for (const linha of linhasSubstituidas) {
-                        if (linha.startsWith("03|")) {
-                            const partes = linha.split("|");
-                            if (partes.length > 2) {
-                                const id = partes[1];
-                                const cpf = partes[2];
-                                const chave = `${cpf}|${id}`;
-                                // Mantém apenas a linha cujo ID é o primeiro associado àquele CPF
-                                if (cpfParaPrimeiroId[cpf] === id && !cpfIdsMantidos.has(chave)) {
-                                    cpfIdsMantidos.add(chave);
-                                    linhasFinais.push(linha);
-                                }
-                            }
-                        } else {
-                            // Mantém todas as outras linhas
-                            linhasFinais.push(linha);
-                        }
-                    }
-
-                    // Etapa 4: Criar e oferecer o arquivo final para download
-                    const blob = new Blob([linhasFinais.join("\n")], { type: "text/plain;charset=utf-8" });
-                    const url = URL.createObjectURL(blob);
-                    
-                    downloadLink.href = url;
-                    downloadLink.download = "aej_final.txt";
-                    downloadLink.textContent = "📥 Baixar Arquivo Processado";
-                    downloadLink.classList.remove('hidden');
-
-                } catch (err) {
-                    showMessage(`Ocorreu um erro ao processar o arquivo: ${err.message}`);
-                } finally {
-                    // Reabilita o botão após o processamento
-                    processButton.disabled = false;
-                    processButton.textContent = 'Processar Arquivo';
-                }
-            };
-
-            reader.onerror = function() {
-                showMessage("Não foi possível ler o arquivo selecionado.");
-                processButton.disabled = false;
-                processButton.textContent = 'Processar Arquivo';
-            };
-
-            reader.readAsText(fileInput.files[0], "UTF-8");
-        }
-    </script>
-
+    <!-- Link para o arquivo de script customizado -->
+    <script src="script.js"></script>
 </body>
 </html>
