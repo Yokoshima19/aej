@@ -29,6 +29,13 @@ document.addEventListener("DOMContentLoaded", function () {
         dataFimInput.value = formatDate(lastDay);
     }
 
+    // Extrai 'YYYY-MM-DD' do campo de data (ignorando qualquer hora)
+    function extractDateStr(s) {
+        if (!s) return null;
+        const m = String(s).match(/^(\d{4}-\d{2}-\d{2})/);
+        return m ? m[1] : null;
+    }
+
     fileInput?.addEventListener("change", () => {
         if (fileInput.files.length > 0) {
             fileNameDisplay.textContent = `Arquivo selecionado: ${fileInput.files[0].name}`;
@@ -43,8 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const file = fileInput.files[0];
         if (!file) return showMessage("Por favor, selecione um arquivo .txt.");
 
-        const dataInicio = new Date(dataInicioInput.value);
-        const dataFim = new Date(dataFimInput.value);
+        // Mantemos os valores em string 'YYYY-MM-DD' para comparação lexicográfica
         const dataInicioStr = dataInicioInput.value;
         const dataFimStr = dataFimInput.value;
 
@@ -64,7 +70,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const linha99 = linhas.find(l => l.startsWith("99|"));
                 const assinatura = linhas.find(l => l.startsWith("ASSINATURA_DIGITAL_"));
 
-                // Corrige a linha "01" com as datas definidas
+                // Corrige a linha "01" com as datas definidas (permanece string YYYY-MM-DD)
                 const indexLinha01 = linhas.findIndex(l => l.startsWith("01|"));
                 if (indexLinha01 !== -1) {
                     const partes01 = linhas[indexLinha01].split("|");
@@ -75,6 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
+                // Mapeamento CPF -> primeiro ID (para normalizar IDs nas 05/07)
                 for (const linha of linhas) {
                     if (linha.startsWith("03|")) {
                         const partes = linha.split("|");
@@ -94,16 +101,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     const partes = linha.split("|");
                     const tipo = partes[0];
 
-                    if (["05"].includes(tipo)) {
-                        const dataISO = partes[2];
-                        const dataLinha = new Date(dataISO);
-                        if (!isNaN(dataLinha) && dataLinha >= dataInicio && dataLinha <= dataFim) {
+                    if (tipo === "05") {
+                        const d = extractDateStr(partes[2]); // 05|id|YYYY-MM-DD[THH:mm:ss...]
+                        if (d && d >= dataInicioStr && d <= dataFimStr) {
                             linhasFiltradas.push(linha);
                         }
-                    } else if (["07"].includes(tipo)) {
-                        const dataISO = partes[3];
-                        const dataLinha = new Date(dataISO);
-                        if (!isNaN(dataLinha) && dataLinha >= dataInicio && dataLinha <= dataFim) {
+                    } else if (tipo === "07") {
+                        const d = extractDateStr(partes[3]); // 07|id|...|YYYY-MM-DD[THH:mm:ss...]
+                        if (d && d >= dataInicioStr && d <= dataFimStr) {
                             linhasFiltradas.push(linha);
                         }
                     } else if (["01", "02", "03", "04"].includes(tipo)) {
@@ -111,6 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
+                // Normaliza IDs nas linhas 03, 05 e 07
                 const linhasSubstituidas = linhasFiltradas.map(linha => {
                     const partes = linha.split("|");
                     const tipo = partes[0];
@@ -124,6 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     return partes.join("|");
                 });
 
+                // Remove 03 duplicadas por CPF, mantendo apenas a primeira (ID normalizado)
                 const cpfIdsMantidos = new Set();
                 const linhasFinais = [];
 
@@ -147,13 +154,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (linha99) linhasFinais.push(linha99);
                 if (assinatura) linhasFinais.push(assinatura);
 
-                const conteudoFinal = linhasFinais.join("\r\n");
+                // CORREÇÃO: usar "\r\n" (CRLF) de verdade
+                const conteudoFinal = linhasFinais.join("\r\n") + "\r\n";
                 const blob = new Blob([conteudoFinal], { type: "text/plain;charset=utf-8" });
                 const url = URL.createObjectURL(blob);
 
                 downloadLink.href = url;
                 downloadLink.download = "aej_final.txt";
-                downloadLink.textContent = "📥 Baixar Arquivo Processado";
+                downloadLink.textContent = "Baixar Arquivo Processado";
                 downloadLink.classList.remove("hidden");
 
             } catch (err) {
